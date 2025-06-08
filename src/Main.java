@@ -1,5 +1,4 @@
 import configuration.DbConnection;
-import org.mindrot.jbcrypt.BCrypt;
 import util.PasswordEncryptor;
 
 import java.sql.Connection;
