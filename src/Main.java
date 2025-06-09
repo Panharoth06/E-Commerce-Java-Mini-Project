@@ -1,4 +1,5 @@
 import configuration.DbConnection;
+import model.repository.ProductRepository;
 import util.PasswordEncryptor;
 
 import java.sql.Connection;
@@ -11,6 +12,6 @@ public class Main {
         boolean isMatch = PasswordEncryptor.checkPassword("koko!@#$@!", password);
         if (isMatch) System.out.println("login successful");
         else System.out.println("login failed");
-
+        new ProductRepository().findAll().forEach(System.out::println);
     }
 }
