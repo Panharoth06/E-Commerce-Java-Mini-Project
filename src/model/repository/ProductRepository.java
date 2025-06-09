@@ -3,16 +3,31 @@ package model.repository;
 import configuration.DbConnection;
 import model.entities.Product;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductRepository implements Repository <Product, Integer>{
     @Override
     public Product save(Product product) {
+        try (Connection connection = DbConnection.getDatabaseConnection()) {
+            String sql = """
+                    INSERT INTO products (p_name, category, price, qty, is_deleted, p_uuid, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """;
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, product.getProductName());
+            statement.setString(2, product.getCategory());
+            statement.setDouble(3, product.getPrice());
+            statement.setInt(4, product.getQuantity());
+//            statement.setBoolean(5, product.getIsDeleted());
+//            statement.setString(6, product.getProductUuid());
+//            statement.setTimestamp(7, new Timestamp(product.getCreatedAt().getTime()));
+            int rowAffected = statement.executeUpdate();
+            if (rowAffected > 0) return product;
+        }catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
         return null;
     }
 

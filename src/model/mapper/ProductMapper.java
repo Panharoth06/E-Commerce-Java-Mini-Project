@@ -1,7 +1,11 @@
 package model.mapper;
 
+import model.dto.CreateProductDto;
 import model.dto.ProductResponseDto;
 import model.entities.Product;
+
+import java.sql.Timestamp;
+import java.util.UUID;
 
 public class ProductMapper {
     public static ProductResponseDto fromProductToProductResponseDto(Product product) {
@@ -10,6 +14,18 @@ public class ProductMapper {
                 .category(product.getCategory())
                 .price(product.getPrice())
                 .quantity(product.getQuantity())
+                .build();
+    }
+    public static Product fromCreateProductDtoToProduct(CreateProductDto createProductDto) {
+        return Product
+                .builder()
+                .productName(createProductDto.productName())
+                .category(createProductDto.category())
+                .price(createProductDto.price())
+                .quantity(createProductDto.quantity())
+                .isDeleted(false)
+                .productUuid(UUID.randomUUID().toString())
+                .createdAt(new Timestamp(System.currentTimeMillis()))
                 .build();
     }
 }
