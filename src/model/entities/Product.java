@@ -21,3 +21,8 @@ public class Product {
     String productUuid;
     Date createdAt;
 }
+
+
+
+
+
