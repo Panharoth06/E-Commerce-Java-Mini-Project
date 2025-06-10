@@ -23,9 +23,6 @@ public class ProductMapper {
                 .category(createProductDto.category())
                 .price(createProductDto.price())
                 .quantity(createProductDto.quantity())
-                .isDeleted(false)
-                .productUuid(UUID.randomUUID().toString())
-                .createdAt(new Timestamp(System.currentTimeMillis()))
                 .build();
     }
 }

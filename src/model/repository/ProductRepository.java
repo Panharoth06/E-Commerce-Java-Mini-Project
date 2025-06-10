@@ -10,6 +10,7 @@ import java.util.List;
 public class ProductRepository implements Repository <Product, Integer>{
     @Override
     public Product save(Product product) {
+
         try (Connection connection = DbConnection.getDatabaseConnection()) {
             String sql = """
                     INSERT INTO products (p_name, category, price, qty, is_deleted, p_uuid, created_at)
@@ -20,9 +21,9 @@ public class ProductRepository implements Repository <Product, Integer>{
             statement.setString(2, product.getCategory());
             statement.setDouble(3, product.getPrice());
             statement.setInt(4, product.getQuantity());
-//            statement.setBoolean(5, product.getIsDeleted());
-//            statement.setString(6, product.getProductUuid());
-//            statement.setTimestamp(7, new Timestamp(product.getCreatedAt().getTime()));
+            statement.setBoolean(5, product.getIsDeleted());
+            statement.setString(6, product.getProductUuid());
+            statement.setTimestamp(7, (Timestamp) product.getCreatedAt());
             int rowAffected = statement.executeUpdate();
             if (rowAffected > 0) return product;
         }catch (SQLException e) {

@@ -12,14 +12,17 @@ import java.util.List;
 import java.util.UUID;
 
 public class ProductImpl implements ProductService {
+    private final ProductRepository productRepository = new ProductRepository();
 
     @Override
     public ProductResponseDto addProduct(CreateProductDto createProductDto) {
         Product product = ProductMapper.fromCreateProductDtoToProduct(createProductDto);
+        product.setProductName(product.getProductName());
         product.setProductUuid(UUID.randomUUID().toString());
         product.setIsDeleted(false);
         product.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        return ProductMapper.fromProductToProductResponseDto(ProductMapper.fromCreateProductDtoToProduct(createProductDto));
+        System.out.println(product);
+        return ProductMapper.fromProductToProductResponseDto(productRepository.save(product));
     }
 
     @Override
