@@ -49,14 +49,13 @@ public class OrderImpl {
         try (Connection conn = DbConnection.getDatabaseConnection()) {
             conn.setAutoCommit(false);
 
-            // Generate order code
+            // order code
             String orderCode = "ORD-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
 
-            // Calculate total price and prepare OrderDetails
             BigDecimal total = BigDecimal.ZERO;
             List<OrderDetail> details = new ArrayList<>();
             for (Cart cart : carts) {
-                BigDecimal priceEach = cart.getPrice(); // make sure price is set in cart entity
+                BigDecimal priceEach = cart.getPrice();
                 BigDecimal lineTotal = priceEach.multiply(BigDecimal.valueOf(cart.getQuantity()));
                 total = total.add(lineTotal);
 
@@ -83,7 +82,7 @@ public class OrderImpl {
             orderRepo.updateProductQuantities(conn, carts);
 
             // Clear cart
-            orderRepo.updateOrRemoveOrderedItems(conn, user.getId(), carts);
+            orderRepo.reduceCartQuantities(conn, user.getId(), carts);
 
             conn.commit();
 

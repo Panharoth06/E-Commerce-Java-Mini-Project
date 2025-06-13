@@ -1,19 +1,31 @@
 package controller;
 
-import model.dto.CreateProductDto;
 import model.dto.ProductResponseDto;
-import model.service.product.ProductImpl;
-import model.service.product.ProductService;
+import model.service.product.ProductServiceImpl;
+import view.ProductView;
 
 import java.util.List;
+import java.util.Map;
 
 public class ProductController {
-    private final ProductImpl productService = new ProductImpl();
-//    public ProductResponseDto addProduct(CreateProductDto createProductDto) {
-//        return productService.addProduct(createProductDto);
-//    }
+    private final ProductServiceImpl productServiceImpl = new ProductServiceImpl();
+    public List<ProductResponseDto> getProductByName(String name){
+        return productServiceImpl.findProductByName(name);
+    }
+    public List<ProductResponseDto> getProductByCategory(String category){
+        return productServiceImpl.findProductByCategory(category);
+    }
 
     public List<ProductResponseDto> getAllProducts() {
-        return productService.findAllProducts();
+        return productServiceImpl.getAllProducts();
+    }
+
+    public void listAllProductsInStore() {
+        List<ProductResponseDto> allProducts = productServiceImpl.getAllProducts();
+    }
+
+
+    public Map<String, List<ProductResponseDto>> listAllProductsInStoreSeparatedByCategory() {
+        return productServiceImpl.getAllProductsGroupedByCategory();
     }
 }

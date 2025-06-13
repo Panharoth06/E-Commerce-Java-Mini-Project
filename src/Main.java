@@ -6,6 +6,7 @@ import model.repository.ProductRepository;
 import model.service.OrderImpl;
 import util.PasswordEncryptor;
 import view.OrderView;
+import view.ProductView;
 import view.UserView;
 
 import java.sql.Connection;
@@ -32,5 +33,7 @@ public class Main {
 //        OrderView orderView = new OrderView();
 //        orderView.placeOrder();
         UserView.home();
+//        new ProductView().displayAllProducts();
+//        ProductView.listAllProductsInStoreSeparatedByCategory();
     }
 }

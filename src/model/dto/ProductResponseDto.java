@@ -8,7 +8,8 @@ import java.math.BigDecimal;
 public record ProductResponseDto(
         String productName,
         String category,
-        BigDecimal price,
-        Integer quantity
+        Double price,
+        Integer quantity,
+        String productUuid
 )
 { }

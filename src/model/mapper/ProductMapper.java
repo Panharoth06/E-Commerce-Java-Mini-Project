@@ -1,27 +1,43 @@
 package model.mapper;
 
-import model.dto.CreateProductDto;
 import model.dto.ProductResponseDto;
 import model.entities.Product;
 
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProductMapper {
     public static ProductResponseDto fromProductToProductResponseDto(Product product) {
         return ProductResponseDto.builder()
                 .productName(product.getProductName())
                 .category(product.getCategory())
-                .price(BigDecimal.valueOf(product.getPrice()))
+                .price(product.getPrice())
                 .quantity(product.getQuantity())
+                .productUuid(product.getProductUuid())
                 .build();
     }
-    public static Product fromCreateProductDtoToProduct(CreateProductDto createProductDto) {
-        return Product
-                .builder()
-                .productName(createProductDto.productName())
-                .category(createProductDto.category())
-                .price(createProductDto.price())
-                .quantity(createProductDto.quantity())
+
+    public ProductResponseDto toProductDto(Product product) {
+        if (product == null) {
+            return null;
+        }
+        return ProductResponseDto.builder()
+                .productName(product.getProductName())
+                .category(product.getCategory())
+                .price(product.getPrice())
+                .quantity(product.getQuantity())
+                .productUuid(product.getProductUuid())
                 .build();
     }
+    public List<ProductResponseDto> toProductDtoList(List<Product> products) {
+        if (products == null) {
+            return List.of();
+        }
+        return products.stream()
+                .map(this::toProductDto)
+                .collect(Collectors.toList());
+    }
+
+
+
 }

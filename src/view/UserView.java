@@ -7,15 +7,61 @@ import java.util.Scanner;
 
 public class UserView {
     private final static UserController controller = new UserController();
+    static Scanner scanner = new Scanner(System.in);
+
+    private static void thumbnail() {
+        System.out.println("""
+                +====================================================================+
+                |                               E-Commerce                           |
+                +====================================================================+
+                | 1. View All Products in Store                                      |
+                | 2. Search Product                                                  |
+                | 3. Add Product to Cart                                             |
+                | 4. Order Product                                                   |
+                | 5. Logout                                                          |
+                | 0. Exit                                                            |
+                +====================================================================+
+                """);
+    }
+
+    private static void feature() {
+
+        byte option;
+        while (true) {
+            thumbnail();
+            System.out.print("[+] Insert your option: ");
+            try {
+                option = scanner.nextByte();
+                switch (option) {
+                    case 1 -> ProductView.listAllProductsInStoreSeparatedByCategory();
+                    case 2 -> ProductView.searchProduct();
+                    case 3 -> System.out.println("Add product to cart");
+                    case 4 -> new OrderView().placeOrder();
+                    case 5 -> {
+                        if (LoginSession.isLoggedIn()) {
+                            LoginSession.clearSession();
+                            System.out.println("You have been logged out.");
+                        } else {
+                            System.out.println("You are not logged in.");
+                        }
+                        home();
+                    }
+                    case 0 -> System.exit(0);
+                    default -> System.out.println("Invalid option");
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+    }
 
     public static void home() {
-        Scanner scanner = new Scanner(System.in);
-        OrderView orderView = new OrderView();
 
         while (true) {
             if (LoginSession.isLoggedIn()) {
                 System.out.println("Already logged in as: " + LoginSession.getLoggedInUsername());
-                orderView.placeOrder();
+                feature();
                 break;
             }
 
@@ -25,8 +71,7 @@ public class UserView {
                     ==========================================
                     1. REGISTER
                     2. LOGIN
-                    3. LOGOUT
-                    4. EXIT
+                    3. EXIT
                     ==========================================
                     """);
 
@@ -76,15 +121,6 @@ public class UserView {
                 }
 
                 case "3" -> {
-                    if (LoginSession.isLoggedIn()) {
-                        LoginSession.clearSession();
-                        System.out.println("You have been logged out.");
-                    } else {
-                        System.out.println("You are not logged in.");
-                    }
-                }
-
-                case "4" -> {
                     System.out.println("Exiting program...");
                     System.exit(0);
                 }

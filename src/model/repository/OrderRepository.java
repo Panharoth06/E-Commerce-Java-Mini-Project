@@ -171,6 +171,48 @@ public class OrderRepository {
         }
     }
 
+    public void reduceCartQuantities(Connection conn, int userId, List<Cart> carts) throws SQLException {
+        String updateSql = "UPDATE carts SET quantity = quantity - ? WHERE user_id = ? AND p_id = ?";
+        String deleteSql = "DELETE FROM carts WHERE user_id = ? AND p_id = ?";
+
+        try (
+                PreparedStatement updateStmt = conn.prepareStatement(updateSql);
+                PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)
+        ) {
+            for (Cart c : carts) {
+                int newQty = getCurrentCartQuantity(conn, userId, c.getProductId()) - c.getQuantity();
+                if (newQty <= 0) {
+                    // delete if quantity becomes 0 or less
+                    deleteStmt.setInt(1, userId);
+                    deleteStmt.setLong(2, c.getProductId());
+                    deleteStmt.addBatch();
+                } else {
+                    // just reduce
+                    updateStmt.setInt(1, c.getQuantity());
+                    updateStmt.setInt(2, userId);
+                    updateStmt.setLong(3, c.getProductId());
+                    updateStmt.addBatch();
+                }
+            }
+            updateStmt.executeBatch();
+            deleteStmt.executeBatch();
+        }
+    }
+
+    private int getCurrentCartQuantity(Connection conn, int userId, long productId) throws SQLException {
+        String sql = "SELECT quantity FROM carts WHERE user_id = ? AND p_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setLong(2, productId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("quantity");
+            }
+        }
+        return 0;
+    }
+
+
 
 
 }

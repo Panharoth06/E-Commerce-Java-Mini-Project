@@ -6,7 +6,6 @@ import model.entities.User;
 import model.repository.UserRepositoryImpl;
 import model.service.cart.CartImpl;
 
-import java.sql.SQLOutput;
 import java.util.*;
 
 public class OrderView {
@@ -16,12 +15,15 @@ public class OrderView {
     private final CartImpl cartImpl = new CartImpl();
 
     public void placeOrder() {
-        System.out.println(user);
-//        user.setId(2); // test user
         try {
-            // Show all items in cart with UUIDs
             List<CartResponseDto> carts = cartImpl.getAllProductsInCart(user.getId());
-            carts.forEach(System.out::println);
+            if (carts.isEmpty()) {
+                System.out.println("[!] There are no products in cart.");
+                return;
+            }
+            else {
+                new TableUI<CartResponseDto>().getTableDisplay(carts);
+            }
 
             Scanner scanner = new Scanner(System.in);
             System.out.print("\n🛒 Enter product UUIDs to order (comma-separated): ");
@@ -44,7 +46,6 @@ public class OrderView {
                 uuidQuantityMap.put(uuid, qty);
             }
 
-            // Call controller with map of UUIDs and quantities
             orderController.orderController(user, uuidQuantityMap);
 
         } catch (Exception e) {
