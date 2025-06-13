@@ -4,8 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import model.dto.ProductDto;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -20,4 +23,5 @@ public class Product {
     Boolean isDeleted;
     String productUuid;
     Date createdAt;
+
 }
