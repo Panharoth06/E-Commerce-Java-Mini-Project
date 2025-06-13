@@ -3,17 +3,21 @@ package view;
 import controller.OrderController;
 import model.dto.CartResponseDto;
 import model.entities.User;
+import model.repository.UserRepositoryImpl;
 import model.service.cart.CartImpl;
 
+import java.sql.SQLOutput;
 import java.util.*;
 
 public class OrderView {
     private final OrderController orderController = new OrderController();
-    private final User user = new User();
+    private final UserRepositoryImpl  userRepository = new UserRepositoryImpl();
+    private final User user = userRepository.getLoggedInUser();
     private final CartImpl cartImpl = new CartImpl();
 
     public void placeOrder() {
-        user.setId(2); // test user
+        System.out.println(user);
+//        user.setId(2); // test user
         try {
             // Show all items in cart with UUIDs
             List<CartResponseDto> carts = cartImpl.getAllProductsInCart(user.getId());

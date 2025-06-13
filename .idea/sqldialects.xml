@@ -4,6 +4,6 @@
     <file url="file://$PROJECT_DIR$/src/model/repository/CartRepository.java" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/src/model/repository/OrderRepository.java" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/src/model/repository/ProductRepository.java" dialect="GenericSQL" />
-    <file url="file://$PROJECT_DIR$/src/model/repository/UserRepository.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/src/model/repository/UserRepositoryImpl.java" dialect="GenericSQL" />
   </component>
 </project>

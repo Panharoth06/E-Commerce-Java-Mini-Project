@@ -6,6 +6,7 @@ import model.repository.ProductRepository;
 import model.service.OrderImpl;
 import util.PasswordEncryptor;
 import view.OrderView;
+import view.UserView;
 
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -27,7 +28,9 @@ public class Main {
 //        order.placeOrder(user, new ArrayList<>(
 //                List.of("be966f31-37b7-49c0-8ebe-d4e483cf6f25")));
 //
-        OrderView orderView = new OrderView();
-        orderView.placeOrder();
+//        UserView.home();
+//        OrderView orderView = new OrderView();
+//        orderView.placeOrder();
+        UserView.home();
     }
 }
