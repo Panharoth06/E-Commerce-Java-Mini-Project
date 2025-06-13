@@ -4,15 +4,14 @@ import model.dto.CreateProductDto;
 import model.dto.ProductResponseDto;
 import model.entities.Product;
 
-import java.sql.Timestamp;
-import java.util.UUID;
+import java.math.BigDecimal;
 
 public class ProductMapper {
     public static ProductResponseDto fromProductToProductResponseDto(Product product) {
         return ProductResponseDto.builder()
                 .productName(product.getProductName())
                 .category(product.getCategory())
-                .price(product.getPrice())
+                .price(BigDecimal.valueOf(product.getPrice()))
                 .quantity(product.getQuantity())
                 .build();
     }

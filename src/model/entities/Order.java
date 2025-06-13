@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -12,9 +13,9 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Order {
-    Integer id;
-    Integer userId;
-    String orderCode;
-    Date orderDate;
-    Double totalPrice;
+    private Integer id;
+    private Integer userId;
+    private String orderCode;
+    private Date orderDate;
+    private BigDecimal totalPrice;
 }

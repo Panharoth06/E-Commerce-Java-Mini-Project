@@ -5,16 +5,24 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Cart {
-    Integer id;
-    Integer userId;
-    Long productId;
-    Integer quantity;
-    Date added_at;
+    private Integer id;
+    private Integer userId;
+    private Long productId;
+    private Integer quantity;
+    private LocalDateTime addedAt;
+    private String productName;
+    private String category;
+
+    private int originalCartQuantity;
+    private BigDecimal price;
+    private String productUUID;
+
 }
