@@ -66,7 +66,6 @@ public class OrderImpl {
                 details.add(detail);
             }
 
-            // Create and insert order
             Order order = new Order();
             order.setUserId(user.getId());
             order.setOrderCode(orderCode);
@@ -75,18 +74,14 @@ public class OrderImpl {
             int orderId = orderRepo.createOrder(conn, order);
             order.setId(orderId);
 
-            // Insert order details
             orderRepo.insertOrderDetails(conn, orderId, details);
 
-            // Update stock
             orderRepo.updateProductQuantities(conn, carts);
 
-            // Clear cart
             orderRepo.reduceCartQuantities(conn, user.getId(), carts);
 
             conn.commit();
 
-            // Output
             System.out.println("✅ Order Placed Successfully");
             System.out.println("🧾 Order Code: " + order.getOrderCode());
             System.out.println("🛒 Products:");

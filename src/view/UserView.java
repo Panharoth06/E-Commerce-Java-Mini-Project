@@ -11,16 +11,16 @@ public class UserView {
 
     private static void thumbnail() {
         System.out.println("""
-                +====================================================================+
-                |                               E-Commerce                           |
-                +====================================================================+
-                | 1. View All Products in Store                                      |
-                | 2. Search Product                                                  |
-                | 3. Add Product to Cart                                             |
-                | 4. Order Product                                                   |
-                | 5. Logout                                                          |
-                | 0. Exit                                                            |
-                +====================================================================+
+                ╔═══════════════════════════════════════════════════════════════════════╗
+                ║                               E-Commerce                              ║
+                ╟═══════════════════════════════════════════════════════════════════════╢
+                ║ 1. View All Products in Store                                         ║
+                ║ 2. Search Product                                                     ║
+                ║ 3. Cart                                                               ║
+                ║ 4. Order Product                                                      ║
+                ║ 5. Logout                                                             ║
+                ║ 0. Exit                                                               ║
+                ╚═══════════════════════════════════════════════════════════════════════╝
                 """);
     }
 
@@ -35,7 +35,7 @@ public class UserView {
                 switch (option) {
                     case 1 -> ProductView.listAllProductsInStoreSeparatedByCategory();
                     case 2 -> ProductView.searchProduct();
-                    case 3 -> System.out.println("Add product to cart");
+                    case 3 -> new CartView().showCartMenu();
                     case 4 -> new OrderView().placeOrder();
                     case 5 -> {
                         if (LoginSession.isLoggedIn()) {
@@ -44,6 +44,7 @@ public class UserView {
                         } else {
                             System.out.println("You are not logged in.");
                         }
+                        scanner.nextLine();
                         home();
                     }
                     case 0 -> System.exit(0);

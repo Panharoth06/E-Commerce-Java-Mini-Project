@@ -1,6 +1,7 @@
 package controller;
 
 import model.dto.ProductResponseDto;
+import model.entities.User;
 import model.service.product.ProductServiceImpl;
 import view.ProductView;
 
@@ -27,5 +28,9 @@ public class ProductController {
 
     public Map<String, List<ProductResponseDto>> listAllProductsInStoreSeparatedByCategory() {
         return productServiceImpl.getAllProductsGroupedByCategory();
+    }
+
+    public boolean addToCart(User user, ProductResponseDto productResponseDto, Integer quantity) {
+        return productServiceImpl.addProductToCart(user.getId(), productResponseDto.productUuid(), quantity);
     }
 }

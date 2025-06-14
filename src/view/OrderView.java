@@ -1,22 +1,22 @@
 package view;
 
+import controller.CartController;
 import controller.OrderController;
 import model.dto.CartResponseDto;
 import model.entities.User;
 import model.repository.UserRepositoryImpl;
-import model.service.cart.CartImpl;
 
 import java.util.*;
 
 public class OrderView {
     private final OrderController orderController = new OrderController();
     private final UserRepositoryImpl  userRepository = new UserRepositoryImpl();
+    private final CartController cartController = new CartController();
     private final User user = userRepository.getLoggedInUser();
-    private final CartImpl cartImpl = new CartImpl();
 
     public void placeOrder() {
         try {
-            List<CartResponseDto> carts = cartImpl.getAllProductsInCart(user.getId());
+            List<CartResponseDto> carts = cartController.getAllProductInCart(user);
             if (carts.isEmpty()) {
                 System.out.println("[!] There are no products in cart.");
                 return;
@@ -49,7 +49,7 @@ public class OrderView {
             orderController.orderController(user, uuidQuantityMap);
 
         } catch (Exception e) {
-            System.err.println("❌ Error placing order: " + e.getMessage());
+            System.out.println("❌ Error placing order: " + e.getMessage());
         }
     }
 

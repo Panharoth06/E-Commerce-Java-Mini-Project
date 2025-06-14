@@ -88,7 +88,7 @@ public class ProductRepository {
         String sql = "SELECT id, p_name, category, price, qty, is_deleted, p_uuid, created_at FROM products WHERE p_uuid = ? AND is_deleted = FALSE";
         try (Connection conn = DbConnection.getDatabaseConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, productUuid);
+            stmt.setString(1, productUuid);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return Optional.of(mapResultSetToProduct(rs));

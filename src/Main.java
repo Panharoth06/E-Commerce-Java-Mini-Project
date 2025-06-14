@@ -35,5 +35,6 @@ public class Main {
         UserView.home();
 //        new ProductView().displayAllProducts();
 //        ProductView.listAllProductsInStoreSeparatedByCategory();
+//        ProductView.viewAllProductsInStore();
     }
 }
