@@ -61,11 +61,11 @@ public class CartRepository {
     }
 
     // Remove a cart item - No changes here as it uses 'id'
-    public boolean delete(Integer cartItemId) {
+    public boolean delete(Long cartItemId) {
         String sql = "DELETE FROM carts WHERE id = ?";
         try (Connection conn = DbConnection.getDatabaseConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, cartItemId);
+            stmt.setLong(1, cartItemId);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Error deleting cart item: " + e.getMessage(), e);
@@ -178,4 +178,19 @@ public class CartRepository {
                 .addedAt(rs.getTimestamp("added_at").toLocalDateTime())
                 .build();
     }
+
+    public boolean deleteByUserIdAndProductUUID(Integer userId, String productUuid) {
+        String sql = "DELETE FROM carts WHERE user_id = ? AND p_id = (SELECT id FROM products WHERE p_uuid = ?)";
+        try (Connection conn = DbConnection.getDatabaseConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, productUuid);
+            int affected = stmt.executeUpdate();
+            return affected > 0;
+        } catch (SQLException e) {
+            System.err.println("❌ Failed to delete cart item: " + e.getMessage());
+        }
+        return false;
+    }
+
 }

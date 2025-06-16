@@ -91,6 +91,7 @@ public class ProductView {
                 ╟═══════════════════════════════════════════════════════════════════════╢
                 ║1. Search Product                                                      ║
                 ║2. View All Product                                                    ║
+                ║3. Already Know Product UUID                                           ║
                 ║0. Exit                                                                ║
                 ╚═══════════════════════════════════════════════════════════════════════╝
                 """);
@@ -112,6 +113,7 @@ public class ProductView {
                         listAllProductsInStoreSeparatedByCategory();
                         return;
                     }
+                    case 3 -> {return;}
                     case 0 -> isExited = true;
                     default -> {
                         System.out.println("⚠️ Invalid option. Choose 1 or 2 (0 to exit)");

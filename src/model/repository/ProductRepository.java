@@ -11,6 +11,8 @@ import java.util.UUID;
 
 public class ProductRepository {
 
+
+
     public List<Product> findProductByName(String name) {
         try (Connection con = DbConnection.getDatabaseConnection()) {
             String sql = """
@@ -35,7 +37,7 @@ public class ProductRepository {
             }
             return products;
         } catch (Exception e) {
-            System.out.println("[!] Product not found: " + e.getMessage());
+            System.out.println("[!] Product not found");
         }
         return null;
     }
@@ -64,7 +66,7 @@ public class ProductRepository {
             }
             return products;
         } catch (Exception e) {
-            System.out.println("[!] Product not found: " + e.getMessage());
+            System.out.println("[!] Product not found");
         }
         return null;
     }
@@ -79,7 +81,7 @@ public class ProductRepository {
                 return Optional.of(mapResultSetToProduct(rs));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error finding product by ID: " + e.getMessage(), e);
+            System.out.println("[]");
         }
         return Optional.empty();
     }

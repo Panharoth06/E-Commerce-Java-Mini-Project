@@ -44,22 +44,22 @@ public class CartImpl {
         }
         Cart existingCartItem = existingCartItemOptional.get();
 
-        // Check product stock before updating
-//        Optional<Product> productOptional = productRepository.findById(productId);
-//        if (productOptional.isEmpty()) {
-//            System.err.println("Product associated with cart item not found.");
-//            return false;
-//        }
-//        Product product = productOptional.get();
-//        if (product.getQuantity() < newQuantity) {
-//            System.err.println("Not enough stock for product " + product.getProductName() + ". Available: " + product.getQuantity() + ", requested: " + newQuantity);
-//            return false;
-//        }
+//         Check product stock before updating
+        Optional<Product> productOptional = productRepository.findById(existingCartItem.getProductId());
+        if (productOptional.isEmpty()) {
+            System.err.println("Product associated with cart item not found.");
+            return false;
+        }
+        Product product = productOptional.get();
+        if (product.getQuantity() < newQuantity) {
+            System.err.println("Not enough stock for product " + product.getProductName() + ". Available: " + product.getQuantity() + ", requested: " + newQuantity);
+            return false;
+        }
 
         try {
             if (newQuantity == 0) {
                 // If new quantity is 0, remove the item
-                return cartRepository.delete(existingCartItem.getId());
+                return cartRepository.delete(existingCartItem.getProductId());
             } else {
                 return cartRepository.updateQuantity(existingCartItem.getId(), newQuantity);
             }
@@ -72,20 +72,20 @@ public class CartImpl {
     public boolean deleteCartItemQuantity(Integer userId, String productUuid) {
         AtomicBoolean atomicBoolean = new AtomicBoolean(false);
         cartRepository.findByUserId(userId).forEach(cart -> {
-             atomicBoolean.set(cartRepository.delete(cart.getId()));
+             atomicBoolean.set(cartRepository.deleteByUserIdAndProductUUID(userId,  productUuid));
          });
         return atomicBoolean.get();
     }
 
     public boolean clearUserCart(Integer userId) {
         if (userId == null) {
-            System.err.println("Invalid user ID for clearing cart.");
+            System.out.println("Invalid user ID for clearing cart.");
             return false;
         }
         try {
             return cartRepository.clearCart(userId);
         } catch (RuntimeException e) {
-            System.err.println("Failed to clear cart for user " + userId + ": " + e.getMessage());
+            System.out.println("Failed to clear cart for user " + userId + ": " + e.getMessage());
             return false;
         }
     }

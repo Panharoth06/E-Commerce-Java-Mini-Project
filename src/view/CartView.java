@@ -20,31 +20,29 @@ import java.util.UUID;
 import static org.postgresql.core.Oid.UUID;
 
 public class CartView {
-    private final CartImpl cartService = new CartImpl();
     private final CartController cartController = new CartController();
     private final UserRepositoryImpl userRepository = new UserRepositoryImpl();
     private final User user = userRepository.getLoggedInUser();
-    private final ProductService productService = new ProductServiceImpl(); // To allow searching products by UUID
-    // To display product search results
 
-    // A placeholder for the current user ID. In a real app, this would come from a login system.
-    private final Integer CURRENT_USER_ID = user.getId(); // Example user ID
-
-    private final Scanner scanner = new Scanner(System.in); // For user input
-
+    private final Scanner scanner = new Scanner(System.in);
 
     public void showCartMenu() {
 
         while (true) {
-            System.out.println("\n--- Cart Menu ---");
-            System.out.println("1. View My Cart");
-            System.out.println("2. Add Product to Cart by UUID");
-            System.out.println("3. Update Cart Item Quantity");
-            System.out.println("4. Remove Product from Cart");
-            System.out.println("5. Clear My Cart");
-            System.out.println("0. Back to Main Menu");
+            System.out.println("""
+                    ╔═══════════════════════════════════════════════════════════════════════╗
+                    ║                               Cart Menu                               ║
+                    ╟═══════════════════════════════════════════════════════════════════════╢
+                    ║ 1. View All Products in Cart                                          ║
+                    ║ 2. Add Product to Cart by UUID                                        ║
+                    ║ 3. Update Cart Item Quantity                                          ║
+                    ║ 4. Remove Product from                                                ║
+                    ║ 5. Clear My Cart                                                      ║
+                    ║ 0. Exit                                                               ║
+                    ╚═══════════════════════════════════════════════════════════════════════╝
+                    """
+            );
             System.out.print("Enter your choice: ");
-
             String choice = scanner.nextLine();
             switch (choice) {
                 case "1":
@@ -75,7 +73,7 @@ public class CartView {
         List<CartResponseDto> cartItems = cartController.getAllProductInCart(user);
         assert cartItems != null;
         if (cartItems.isEmpty()) {
-            System.out.println("There are no items in the cart.");
+            System.out.println("[!] There are no items in the cart :(");
             return;
         }
 
@@ -84,9 +82,11 @@ public class CartView {
     }
 
     public void addProductToCartByUuid() {
-        System.out.println("--- Add Product to Cart by UUID ---");
-        // Optionally list all products first to help user find UUIDs
-        System.out.println("Listing all available products (for reference):");
+        System.out.println("""
+                ╔═══════════════════════════════════════════════════════════════════════╗
+                ║                        Add Product to Cart                            ║
+                ╚═══════════════════════════════════════════════════════════════════════╝
+                """);
         ProductView.addProductToCart();
         System.out.print("Enter Product UUID to add: ");
         String productUuid = scanner.nextLine();
@@ -118,12 +118,16 @@ public class CartView {
     }
 
     public void updateCartItemQuantity() {
-        System.out.println("\n--- Update Cart Item Quantity ---");
+        System.out.println("""
+                ╔═══════════════════════════════════════════════════════════════════════╗
+                ║                        Update Cart Item Quantity                      ║
+                ╚═══════════════════════════════════════════════════════════════════════╝
+                """);
         viewCart(); // Show current cart first
 
         System.out.print("Enter Product UUID to update: ");
         String productUuid = scanner.nextLine();
-        System.out.print("Enter New Quantity (0 to remove): ");
+        System.out.print("Enter New Quantity: ");
         int newQuantity;
         try {
             newQuantity = scanner.nextInt();
@@ -147,9 +151,13 @@ public class CartView {
     }
 
     public void removeProductFromCart() {
-        System.out.println("\n--- Remove Product from Cart ---");
+        System.out.println("""
+                ╔═══════════════════════════════════════════════════════════════════════╗
+                ║                        Remove Product From Cart                       ║
+                ╚═══════════════════════════════════════════════════════════════════════╝
+                """);
         if (cartController.getAllProductInCart(user).isEmpty()) {
-            System.out.println("There are no items in the cart.");
+            System.out.println("There are no items in the cart :(");
             return; // Exit if cart is empty
         }
         viewCart();
@@ -167,10 +175,14 @@ public class CartView {
     }
 
     public void clearUserCart() {
-        System.out.println("\n--- Clear Cart ---");
+        System.out.println("""
+                ╔═══════════════════════════════════════════════════════════════════════╗
+                ║                              Clear My Cart                            ║
+                ╚═══════════════════════════════════════════════════════════════════════╝
+                """);
          // Show current cart first
         if (cartController.getAllProductInCart(user).isEmpty()) {
-            System.out.println("Cart is already empty.");
+            System.out.println("[!] Cart is already empty :)");
             return;
         }
         viewCart();
@@ -182,12 +194,11 @@ public class CartView {
             boolean success = cartController.clearCart(user);
             if (success) {
                 System.out.println("Your cart has been cleared!");
-                viewCart(); // Show empty cart
             } else {
-                System.out.println("Failed to clear cart.");
+                System.out.println("[!] Failed to clear cart.");
             }
         } else {
-            System.out.println("Cart clear operation cancelled.");
+            System.out.println("[-] Cart clear operation cancelled.");
         }
     }
 }
