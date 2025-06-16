@@ -66,37 +66,7 @@ public class UltraOptimizedBulkInsert {
                 // Setup data pipeline
                 BlockingQueue<ByteBuffer> dataQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
                 PipedOutputStream pipedOut = new PipedOutputStream();
-                PipedInputStream pipedIn = new PipedInputStream(pipedOut, BUFFER_SIZE);
-
-                // COPY operation thread
-                Thread copyThread = new Thread(() -> {
-                    try {
-                        CopyManager copyManager = new CopyManager((BaseConnection) conn);
-                        long insertedRows = copyManager.copyIn(
-                                "COPY products (p_name, category, price, qty, is_deleted, p_uuid, created_at) " +
-                                        "FROM STDIN WITH (FORMAT text, FREEZE true, DELIMITER E'\\t')",
-                                pipedIn
-                        );
-                        System.out.printf("✅ COPY operation inserted %,d rows\n", insertedRows);
-                        // Validate row count in database
-                        try (Statement countStmt = conn.createStatement();
-                             ResultSet rs = countStmt.executeQuery("SELECT COUNT(*) FROM products")) {
-                            if (rs.next()) {
-                                long dbRowCount = rs.getLong(1);
-                                System.out.printf("✅ Database reports %,d rows in products table\n", dbRowCount);
-                                if (dbRowCount != TOTAL_ROWS) {
-                                    System.err.printf("❌ Row count mismatch: expected %,d, got %,d\n", TOTAL_ROWS, dbRowCount);
-                                    errorOccurred.set(true);
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        handleError("COPY thread", e);
-                    } finally {
-                        closeQuietly(pipedIn);
-                    }
-                }, "CopyThread");
-                copyThread.start();
+                Thread copyThread = getCopyThread(pipedOut, conn);
 
                 // Producer threads
                 ExecutorService producerExecutor = Executors.newFixedThreadPool(NUM_PRODUCERS);
@@ -143,7 +113,7 @@ public class UltraOptimizedBulkInsert {
                     try (PipedOutputStream out = pipedOut) {
                         int buffersProcessed = 0;
                         while (!errorOccurred.get()) {
-                            ByteBuffer buffer = dataQueue.poll(100, TimeUnit.MILLISECONDS);
+                            ByteBuffer buffer = dataQueue.poll(1, TimeUnit.SECONDS); // Increased timeout
                             if (buffer == null) {
                                 if (producerLatch.getCount() == 0 && dataQueue.isEmpty()) {
                                     break;
@@ -152,25 +122,21 @@ public class UltraOptimizedBulkInsert {
                             }
 
                             if (buffer.hasRemaining()) {
-                                try {
-                                    byte[] array;
-                                    if (buffer.hasArray()) {
-                                        array = buffer.array();
-                                        out.write(array, buffer.arrayOffset(), buffer.remaining());
-                                    } else {
-                                        array = new byte[buffer.remaining()];
-                                        buffer.get(array);
-                                        out.write(array);
-                                    }
-                                    bytesWritten.addAndGet(buffer.remaining());
-                                } catch (IOException e) {
-                                    handleError("Consumer write", e);
+                                byte[] array;
+                                if (buffer.hasArray()) {
+                                    array = buffer.array();
+                                    out.write(array, buffer.arrayOffset(), buffer.remaining());
+                                } else {
+                                    array = new byte[buffer.remaining()];
+                                    buffer.get(array);
+                                    out.write(array);
                                 }
+                                bytesWritten.addAndGet(buffer.remaining());
                             }
 
                             buffersProcessed++;
                             if (buffersProcessed % 100 == 0) {
-                                System.out.printf("✅ Consumer processed %d buffers (%,d bytes)\n",
+                                System.out.printf("🔄 Consumer processed %d buffers (%,d bytes)\n",
                                         buffersProcessed, bytesWritten.get());
                             }
                         }
@@ -193,7 +159,7 @@ public class UltraOptimizedBulkInsert {
                     handleError("Producer executor await", e);
                 }
 
-                // Send end-of-data marker
+                // Send end-of-data marker only if no errors occurred
                 if (!errorOccurred.get()) {
                     try {
                         dataQueue.put(ByteBuffer.allocate(0).asReadOnlyBuffer());
@@ -214,13 +180,11 @@ public class UltraOptimizedBulkInsert {
                 }
 
                 restoreTableStructure(stmt);
-                System.out.println("⚠️ Skipping index creation to optimize insertion time");
-
                 conn.commit();
-                double readTimeSeconds = measureReadTime(stmt);
+                createIndexesSequentially();
                 resetPostgreSQL(stmt);
 
-                printResults(startTime, rowsGenerated.get(), readTimeSeconds);
+                printResults(startTime, rowsGenerated.get());
 
             } catch (Exception e) {
                 handleError("Main operation", e);
@@ -231,12 +195,47 @@ public class UltraOptimizedBulkInsert {
         }
     }
 
+    private static Thread getCopyThread(PipedOutputStream pipedOut, Connection conn) throws IOException {
+        PipedInputStream pipedIn = new PipedInputStream(pipedOut, BUFFER_SIZE);
+
+        // COPY operation thread
+        Thread copyThread = new Thread(() -> {
+            try {
+                CopyManager copyManager = new CopyManager((BaseConnection) conn);
+                long insertedRows = copyManager.copyIn(
+                        "COPY products (p_name, category, price, qty, is_deleted, p_uuid, created_at) " +
+                                "FROM STDIN WITH (FORMAT text, FREEZE true, DELIMITER E'\\t')",
+                        pipedIn
+                );
+                System.out.printf("✅ COPY operation inserted %,d rows\n", insertedRows);
+                // Validate row count in database
+                try (Statement countStmt = conn.createStatement();
+                     ResultSet rs = countStmt.executeQuery("SELECT COUNT(*) FROM products")) {
+                    if (rs.next()) {
+                        long dbRowCount = rs.getLong(1);
+                        System.out.printf("✅ Database reports %,d rows in products table\n", dbRowCount);
+                        if (dbRowCount != TOTAL_ROWS) {
+                            System.err.printf("❌ Row count mismatch: expected %,d, got %,d\n", TOTAL_ROWS, dbRowCount);
+                            errorOccurred.set(true);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                handleError("COPY thread", e);
+            } finally {
+                closeQuietly(pipedIn);
+            }
+        }, "CopyThread");
+        copyThread.start();
+        return copyThread;
+    }
+
     private static void loadConfiguration() {
         Properties props = System.getProperties();
         TOTAL_ROWS = Integer.parseInt(props.getProperty("totalRows", "10000000"));
-        BATCH_SIZE = Integer.parseInt(props.getProperty("batchSize", "100000"));
-        BUFFER_SIZE = Integer.parseInt(props.getProperty("bufferSize", "10000000")); // 10MB
-        UUID_POOL_SIZE = Integer.parseInt(props.getProperty("uuidPoolSize", "10000"));
+        BATCH_SIZE = Integer.parseInt(props.getProperty("batchSize", "2000000"));
+        BUFFER_SIZE = Integer.parseInt(props.getProperty("bufferSize", "536870912")); // 512MB
+        UUID_POOL_SIZE = Integer.parseInt(props.getProperty("uuidPoolSize", "1000000"));
         QUEUE_CAPACITY = Integer.parseInt(props.getProperty("queueCapacity", "5000"));
         NUM_PRODUCERS = Integer.parseInt(props.getProperty("numProducers",
                 String.valueOf(Math.max(2, Runtime.getRuntime().availableProcessors()))));
@@ -287,9 +286,9 @@ public class UltraOptimizedBulkInsert {
         System.out.println("🔧 Applying PostgreSQL optimizations...");
         try { stmt.execute("SET synchronous_commit = OFF"); } catch (SQLException e) { System.out.println("⚠️ Could not set synchronous_commit: " + e.getMessage()); }
         try { stmt.execute("SET wal_compression = ON"); } catch (SQLException e) { System.out.println("⚠️ Could not set wal_compression: " + e.getMessage()); }
-        try { stmt.execute("SET maintenance_work_mem = '512MB'"); } catch (SQLException e) { System.out.println("⚠️ Could not set maintenance_work_mem: " + e.getMessage()); }
-        try { stmt.execute("SET work_mem = '64MB'"); } catch (SQLException e) { System.out.println("⚠️ Could not set work_mem: " + e.getMessage()); }
-        try { stmt.execute("SET temp_buffers = '64MB'"); } catch (SQLException e) { System.out.println("⚠️ Could not set temp_buffers: " + e.getMessage()); }
+        try { stmt.execute("SET maintenance_work_mem = '6GB'"); } catch (SQLException e) { System.out.println("⚠️ Could not set maintenance_work_mem: " + e.getMessage()); }
+        try { stmt.execute("SET work_mem = '3GB'"); } catch (SQLException e) { System.out.println("⚠️ Could not set work_mem: " + e.getMessage()); }
+        try { stmt.execute("SET temp_buffers = '3GB'"); } catch (SQLException e) { System.out.println("⚠️ Could not set temp_buffers: " + e.getMessage()); }
         try { stmt.execute("SET max_parallel_workers_per_gather = 0"); } catch (SQLException e) { System.out.println("⚠️ Could not set max_parallel_workers_per_gather: " + e.getMessage()); }
     }
 
@@ -322,18 +321,28 @@ public class UltraOptimizedBulkInsert {
         stmt.execute("ALTER TABLE products ALTER COLUMN is_deleted SET DEFAULT FALSE");
     }
 
-    private static double measureReadTime(Statement stmt) throws SQLException {
-        System.out.println("📖 Measuring read time for SELECT * FROM products...");
-        long startTime = System.currentTimeMillis();
-        try (ResultSet rs = stmt.executeQuery("SELECT * FROM products")) {
-            while (rs.next()) {
-                // Iterate through rows to ensure data is read
-            }
+    private static void createIndexesSequentially() throws Exception {
+        System.out.println("📈 Creating indexes sequentially...");
+        createIndex("idx_products_name", "p_name");
+        if (!errorOccurred.get()) createIndex("idx_products_category", "category");
+        if (!errorOccurred.get()) createIndex("idx_products_puuid", "p_uuid");
+        if (!errorOccurred.get()) createIndex("idx_products_composite", "p_name, category");
+    }
+
+    private static void createIndex(String indexName, String columns) {
+        try (Connection conn = DbConnection.getDatabaseConnection();
+             Statement stmt = conn.createStatement()) {
+
+            long start = System.currentTimeMillis();
+            stmt.execute("SET max_parallel_workers_per_gather = 4");
+            stmt.execute("SET max_parallel_maintenance_workers = 4");
+
+            stmt.execute(String.format("CREATE INDEX CONCURRENTLY %s ON products (%s)", indexName, columns));
+            System.out.printf("✅ %s created (%.1fs)\n", indexName,
+                    (System.currentTimeMillis() - start) / 1000.0);
+        } catch (SQLException e) {
+            handleError("Index creation for " + indexName, e);
         }
-        long endTime = System.currentTimeMillis();
-        double seconds = (endTime - startTime) / 1000.0;
-        System.out.printf("✅ Read completed in %.2f seconds\n", seconds);
-        return seconds;
     }
 
     private static void resetPostgreSQL(Statement stmt) throws SQLException {
@@ -342,24 +351,23 @@ public class UltraOptimizedBulkInsert {
         try { stmt.execute("SET synchronous_commit = ON"); } catch (SQLException e) { System.out.println("⚠️ Could not set synchronous_commit: " + e.getMessage()); }
     }
 
-    private static void printResults(long startTime, long insertedRows, double readTimeSeconds) {
+    private static void printResults(long startTime, long insertedRows) {
         long endTime = System.currentTimeMillis();
-        double insertSeconds = (endTime - startTime) / 1000.0;
-        double rowsPerSecond = insertedRows / insertSeconds;
+        double seconds = (endTime - startTime) / 1000.0;
+        double rowsPerSecond = insertedRows / seconds;
 
         System.out.println("\n" + "=".repeat(70));
         System.out.println("🚀 ULTRA-OPTIMIZED BULK INSERT COMPLETE!");
         System.out.printf("✅ Successfully inserted: %,d rows\n", insertedRows);
-        System.out.printf("⏱️  Insert time: %.2f seconds (%.1f minutes)\n", insertSeconds, insertSeconds / 60);
-        System.out.printf("🚀 Insert speed: %,.0f rows/second\n", rowsPerSecond);
-        System.out.printf("💾 Insert data rate: %.2f MB/second\n", (rowsPerSecond * MAX_ROW_BYTES_ESTIMATE) / (1024 * 1024));
-        System.out.printf("📖 Read time: %.2f seconds\n", readTimeSeconds);
+        System.out.printf("⏱️  Total time: %.2f seconds (%.1f minutes)\n", seconds, seconds / 60);
+        System.out.printf("🚀 Speed: %,.0f rows/second\n", rowsPerSecond);
+        System.out.printf("💾 Data rate: %.2f MB/second\n", (rowsPerSecond * MAX_ROW_BYTES_ESTIMATE) / (1024 * 1024));
         System.out.println("=".repeat(70));
     }
 
     private static void handleError(String context, Exception e) {
         System.err.printf("❌ Error in %s: %s\n", context, e.getMessage());
-        e.getCause().getMessage();
+        e.printStackTrace();
         errorOccurred.set(true);
         if (e instanceof InterruptedException) {
             Thread.currentThread().interrupt();
