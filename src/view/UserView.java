@@ -1,5 +1,6 @@
 package view;
 
+import controller.ProductInsertionController;
 import controller.UserController;
 import util.LoginSession;
 
@@ -19,6 +20,7 @@ public class UserView {
                 ║ 3. Cart                                                               ║
                 ║ 4. Order Product                                                      ║
                 ║ 5. Logout                                                             ║
+                ║ 6. Challenge                                                          ║
                 ║ 0. Exit                                                               ║
                 ╚═══════════════════════════════════════════════════════════════════════╝
                 """);
@@ -46,6 +48,13 @@ public class UserView {
                         }
                         scanner.nextLine();
                         home();
+                    }
+                    case 6 -> {
+                        try {
+                            ProductInsertionController.run();
+                        } catch (Exception e) {
+                            System.out.println("Error: " + e.getMessage());
+                        }
                     }
                     case 0 -> System.exit(0);
                     default -> System.out.println("Invalid option");
